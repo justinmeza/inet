@@ -249,7 +249,7 @@ inet_connect(inet_host_t *local,
 // returned.
 //
 // Setting `timeout' to 0 causes the function to return immediately if there is
-// no data to receive and setting `timeout' to NULL causes the function to block
+// no data to receive and setting `timeout' to -1 causes the function to block
 // until data is ready to be received.
 //
 // Returns one of:
@@ -279,7 +279,10 @@ inet_receive(inet_host_t *remote,
 		case IN_PROT_TCP:
 			FD_SET(remote->fd, &fds);
 			// Block for a specified amount of time
-			select(remote->fd + 1, &fds, NULL, NULL, &time);
+			if (timeout != -1)
+				select(remote->fd + 1, &fds, NULL, NULL, &time);
+			else
+				select(remote->fd + 1, &fds, NULL, NULL, NULL);
 			if (FD_ISSET(remote->fd, &fds)) {
 				size = recv(remote->fd, data, len, 0);
 				if (size < 0) {
@@ -294,7 +297,10 @@ inet_receive(inet_host_t *remote,
 			socklen_t n = sizeof(remote->addr);
 			FD_SET(local->fd, &fds);
 			// Block for a specified amount of time
-			select(local->fd + 1, &fds, NULL, NULL, &time);
+			if (timeout != -1)
+				select(local->fd + 1, &fds, NULL, NULL, &time);
+			else
+				select(local->fd + 1, &fds, NULL, NULL, NULL);
 			if (FD_ISSET(local->fd, &fds)) {
 				size = recvfrom(local->fd, data, len, 0,
 						(struct sockaddr *)&(remote->addr), &n);
